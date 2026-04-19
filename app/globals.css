@@ -371,50 +371,19 @@ code {
 
 .imessage-page {
   min-height: 100vh;
-  display: grid;
-  place-items: center;
-  padding: 24px 12px;
-  background:
-    radial-gradient(circle at top, rgba(114, 151, 255, 0.24), transparent 30%),
-    linear-gradient(180deg, #dce8ff 0%, #c4d4f8 34%, #eef1f8 100%);
+  background: linear-gradient(180deg, #eef1f7 0%, #e6ebf5 100%);
 }
 
-.iphone-frame-wrapper {
+.imessage-app-shell {
+  min-height: 100vh;
   display: grid;
-  place-items: center;
 }
 
-.iphone-frame {
+.imessage-screen {
   position: relative;
-  width: min(100%, 410px);
-  aspect-ratio: 430 / 874;
-  padding: 14px;
-  border-radius: 54px;
-  background:
-    linear-gradient(160deg, #1b1b21 0%, #363844 48%, #111219 100%);
-  box-shadow:
-    0 40px 120px rgba(17, 32, 65, 0.34),
-    inset 0 2px 0 rgba(255, 255, 255, 0.08);
-}
-
-.iphone-notch {
-  position: absolute;
-  top: 18px;
-  left: 50%;
-  width: 36%;
-  height: 28px;
-  transform: translateX(-50%);
-  border-radius: 0 0 20px 20px;
-  background: #0f1014;
-  z-index: 2;
-}
-
-.iphone-screen {
   display: grid;
   grid-template-rows: auto auto 1fr auto;
-  height: 100%;
-  overflow: hidden;
-  border-radius: 42px;
+  min-height: 100vh;
   background:
     linear-gradient(180deg, #f7f8fc 0%, #e8ebf3 100%);
 }
@@ -422,7 +391,7 @@ code {
 .imessage-statusbar {
   display: flex;
   justify-content: space-between;
-  padding: 16px 22px 8px;
+  padding: max(16px, env(safe-area-inset-top)) 22px 8px;
   color: #111827;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-size: 0.9rem;
@@ -541,7 +510,7 @@ code {
   grid-template-columns: 1fr auto;
   gap: 10px;
   align-items: center;
-  padding: 12px;
+  padding: 12px 12px max(12px, env(safe-area-inset-bottom));
   border-top: 1px solid rgba(107, 114, 128, 0.14);
   background: rgba(249, 250, 252, 0.9);
 }
@@ -587,7 +556,7 @@ code {
 }
 
 .iphone-demo-empty {
-  width: min(420px, 100%);
+  width: min(420px, calc(100% - 24px));
   margin: 60px auto;
   padding: 28px;
   border-radius: 28px;
@@ -625,7 +594,7 @@ code {
   }
 
   .imessage-page {
-    padding: 12px;
+    background: linear-gradient(180deg, #f7f8fc 0%, #e8ebf3 100%);
   }
 
   .hero-copy h1 {

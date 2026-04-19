@@ -78,77 +78,74 @@ export function IMessageDemo({ pets }: Props) {
   }
 
   return (
-    <div className="iphone-frame-wrapper">
-      <div className="iphone-frame">
-        <div className="iphone-notch" />
-        <div className="iphone-screen">
-          <div className="imessage-statusbar">
-            <span>9:41</span>
-            <span>5G</span>
-          </div>
+    <div className="imessage-app-shell">
+      <div className="imessage-screen">
+        <div className="imessage-statusbar">
+          <span>9:41</span>
+          <span>5G</span>
+        </div>
 
-          <div className="imessage-header">
-            <div className="imessage-header-top">Messages</div>
-            <div className="imessage-contact">
-              <div className="imessage-avatar">{selectedPet.petName[0]}</div>
-              <div className="imessage-contact-meta">
-                <select
-                  aria-label="Select pet conversation"
-                  className="imessage-pet-select"
-                  onChange={(event) => setSelectedPetId(event.target.value)}
-                  value={selectedPet.id}
-                >
-                  {pets.map((pet) => (
-                    <option key={pet.id} value={pet.id}>
-                      {pet.petName}
-                    </option>
-                  ))}
-                </select>
-                <span>{selectedPet.twilioNumber}</span>
-              </div>
+        <div className="imessage-header">
+          <div className="imessage-header-top">Messages</div>
+          <div className="imessage-contact">
+            <div className="imessage-avatar">{selectedPet.petName[0]}</div>
+            <div className="imessage-contact-meta">
+              <select
+                aria-label="Select pet conversation"
+                className="imessage-pet-select"
+                onChange={(event) => setSelectedPetId(event.target.value)}
+                value={selectedPet.id}
+              >
+                {pets.map((pet) => (
+                  <option key={pet.id} value={pet.id}>
+                    {pet.petName}
+                  </option>
+                ))}
+              </select>
+              <span>{selectedPet.twilioNumber}</span>
             </div>
           </div>
-
-          <div className="imessage-thread">
-            {history.length === 0 ? (
-              <div className="imessage-empty">
-                <p>Today</p>
-                <span>
-                  Start the thread by sending {selectedPet.petName} a text.
-                </span>
-              </div>
-            ) : (
-              history.map((entry, index) => (
-                <div
-                  className={`imessage-bubble ${entry.role === "assistant" ? "incoming" : "outgoing"}`}
-                  key={`${entry.role}-${index}-${entry.body}`}
-                >
-                  {entry.body}
-                </div>
-              ))
-            )}
-          </div>
-
-          <form className="imessage-composer" onSubmit={handleSubmit}>
-            <input
-              onChange={(event) => setMessage(event.target.value)}
-              placeholder={`Text ${selectedPet.petName}...`}
-              value={message}
-            />
-            <button disabled={isSending} type="submit">
-              {isSending ? "..." : "↑"}
-            </button>
-          </form>
-
-          <input
-            aria-hidden="true"
-            className="imessage-hidden-input"
-            onChange={(event) => setFromNumber(event.target.value)}
-            tabIndex={-1}
-            value={fromNumber}
-          />
-          {status ? <div className="imessage-status-toast">{status}</div> : null}
         </div>
+
+        <div className="imessage-thread">
+          {history.length === 0 ? (
+            <div className="imessage-empty">
+              <p>Today</p>
+              <span>
+                Start the thread by sending {selectedPet.petName} a text.
+              </span>
+            </div>
+          ) : (
+            history.map((entry, index) => (
+              <div
+                className={`imessage-bubble ${entry.role === "assistant" ? "incoming" : "outgoing"}`}
+                key={`${entry.role}-${index}-${entry.body}`}
+              >
+                {entry.body}
+              </div>
+            ))
+          )}
+        </div>
+
+        <form className="imessage-composer" onSubmit={handleSubmit}>
+          <input
+            onChange={(event) => setMessage(event.target.value)}
+            placeholder={`Text ${selectedPet.petName}...`}
+            value={message}
+          />
+          <button disabled={isSending} type="submit">
+            {isSending ? "..." : "↑"}
+          </button>
+        </form>
+
+        <input
+          aria-hidden="true"
+          className="imessage-hidden-input"
+          onChange={(event) => setFromNumber(event.target.value)}
+          tabIndex={-1}
+          value={fromNumber}
+        />
+        {status ? <div className="imessage-status-toast">{status}</div> : null}
       </div>
     </div>
   );
