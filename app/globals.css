@@ -1,0 +1,278 @@
+:root {
+  --bg: #f5efe3;
+  --paper: rgba(255, 252, 245, 0.9);
+  --ink: #1f1d1a;
+  --muted: #5f564e;
+  --accent: #b7562b;
+  --accent-soft: #f6d2be;
+  --line: rgba(31, 29, 26, 0.12);
+  --shadow: 0 24px 80px rgba(70, 44, 20, 0.16);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background:
+    radial-gradient(circle at top left, rgba(255, 225, 191, 0.9), transparent 30%),
+    linear-gradient(135deg, #f9f2e6 0%, #efe2ce 100%);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+code {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+.page-shell {
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 40px 0 72px;
+}
+
+.hero-card,
+.panel {
+  backdrop-filter: blur(16px);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  box-shadow: var(--shadow);
+}
+
+.hero-card {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: 1.2fr 0.8fr;
+  padding: 32px;
+}
+
+.hero-copy h1,
+.panel h2 {
+  margin: 0;
+  line-height: 0.98;
+}
+
+.hero-copy h1 {
+  max-width: 10ch;
+  font-size: clamp(3rem, 8vw, 5.8rem);
+  letter-spacing: -0.06em;
+}
+
+.eyebrow,
+.section-label {
+  margin: 0 0 12px;
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.lede,
+.section-copy,
+.feature-list,
+.steps-list,
+.preview-thread,
+.form-grid label,
+.helper-text,
+.status-banner {
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.feature-list,
+.steps-list {
+  padding-left: 18px;
+}
+
+.builder-grid {
+  display: grid;
+  gap: 24px;
+  margin-top: 24px;
+  grid-template-columns: 1.15fr 0.85fr;
+}
+
+.panel {
+  padding: 28px;
+}
+
+.panel.muted {
+  background: rgba(246, 233, 220, 0.92);
+}
+
+.preview-card {
+  position: relative;
+  overflow: hidden;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(182, 86, 43, 0.14), transparent 42%),
+    rgba(255, 248, 241, 0.95);
+}
+
+.preview-card::after {
+  content: "";
+  position: absolute;
+  inset: auto -32px -42px auto;
+  width: 160px;
+  height: 160px;
+  border-radius: 999px;
+  background: rgba(182, 86, 43, 0.16);
+  filter: blur(24px);
+}
+
+.preview-phone {
+  display: inline-flex;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(31, 29, 26, 0.06);
+  color: var(--ink);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.preview-thread {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.bubble {
+  max-width: 88%;
+  padding: 12px 14px;
+  border-radius: 18px;
+}
+
+.bubble.incoming {
+  background: rgba(31, 29, 26, 0.08);
+}
+
+.bubble.outgoing {
+  justify-self: end;
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+.form-grid {
+  display: grid;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.form-grid label {
+  display: grid;
+  gap: 8px;
+}
+
+.form-grid input,
+.form-grid textarea {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid rgba(31, 29, 26, 0.14);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.75);
+  color: var(--ink);
+  font: inherit;
+}
+
+.form-grid textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.form-grid button {
+  border: 0;
+  border-radius: 999px;
+  padding: 14px 20px;
+  background: var(--accent);
+  color: white;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 120ms ease, opacity 120ms ease;
+}
+
+.form-grid button:hover {
+  transform: translateY(-1px);
+}
+
+.form-grid button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.persona-manager {
+  display: grid;
+  gap: 24px;
+}
+
+.form-actions,
+.saved-pet-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.secondary-button {
+  background: rgba(31, 29, 26, 0.1) !important;
+  color: var(--ink) !important;
+}
+
+.status-banner {
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(182, 86, 43, 0.1);
+}
+
+.saved-pets-empty,
+.saved-pet-meta,
+.saved-pet-description,
+.saved-pet-name span {
+  color: var(--muted);
+}
+
+.saved-pets-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.saved-pet-card {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.saved-pet-name {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.saved-pet-meta,
+.saved-pet-description {
+  margin: 0;
+}
+
+@media (max-width: 860px) {
+  .hero-card,
+  .builder-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-copy h1 {
+    max-width: none;
+  }
+}
