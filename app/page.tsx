@@ -1,5 +1,6 @@
 import { PetPersonaManager } from "@/components/pet-persona-manager";
 import { PersonaPreview } from "@/components/persona-preview";
+import { SmsSimulator } from "@/components/sms-simulator";
 import { listPetProfiles } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
@@ -55,6 +56,16 @@ export default async function HomePage() {
             <li>Twilio returns the message to the SMS thread.</li>
           </ol>
         </div>
+      </section>
+
+      <section className="panel simulator-panel">
+        <p className="section-label">Simulation</p>
+        <h2>Run the SMS product without carrier approvals.</h2>
+        <p className="section-copy">
+          Use the built-in simulator to send a mock inbound text, generate the
+          pet&apos;s reply, and build thread history without Twilio delivery.
+        </p>
+        <SmsSimulator pets={pets} />
       </section>
     </main>
   );

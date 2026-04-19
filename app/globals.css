@@ -282,6 +282,320 @@ code {
   margin-top: 20px;
 }
 
+.simulator-panel {
+  margin-top: 24px;
+}
+
+.simulator-shell {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  margin-top: 20px;
+}
+
+.simulator-form {
+  display: grid;
+  gap: 16px;
+}
+
+.simulator-form label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+}
+
+.simulator-form input,
+.simulator-form textarea,
+.simulator-form select {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid rgba(31, 29, 26, 0.14);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.75);
+  color: var(--ink);
+  font: inherit;
+}
+
+.simulator-form textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.simulator-form button {
+  border: 0;
+  border-radius: 999px;
+  padding: 14px 20px;
+  background: var(--accent);
+  color: white;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.simulator-form button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.simulator-thread-card {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(182, 86, 43, 0.08), transparent 32%),
+    rgba(255, 249, 242, 0.9);
+}
+
+.simulator-thread-header {
+  display: grid;
+  gap: 10px;
+}
+
+.simulator-thread-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.simulator-thread-header h3 span,
+.simulator-preview,
+.simulator-empty,
+.simulator-empty-thread {
+  color: var(--muted);
+}
+
+.simulator-thread {
+  margin-top: 0;
+}
+
+.imessage-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px 12px;
+  background:
+    radial-gradient(circle at top, rgba(114, 151, 255, 0.24), transparent 30%),
+    linear-gradient(180deg, #dce8ff 0%, #c4d4f8 34%, #eef1f8 100%);
+}
+
+.iphone-frame-wrapper {
+  display: grid;
+  place-items: center;
+}
+
+.iphone-frame {
+  position: relative;
+  width: min(100%, 410px);
+  aspect-ratio: 430 / 874;
+  padding: 14px;
+  border-radius: 54px;
+  background:
+    linear-gradient(160deg, #1b1b21 0%, #363844 48%, #111219 100%);
+  box-shadow:
+    0 40px 120px rgba(17, 32, 65, 0.34),
+    inset 0 2px 0 rgba(255, 255, 255, 0.08);
+}
+
+.iphone-notch {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  width: 36%;
+  height: 28px;
+  transform: translateX(-50%);
+  border-radius: 0 0 20px 20px;
+  background: #0f1014;
+  z-index: 2;
+}
+
+.iphone-screen {
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 42px;
+  background:
+    linear-gradient(180deg, #f7f8fc 0%, #e8ebf3 100%);
+}
+
+.imessage-statusbar {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px 22px 8px;
+  color: #111827;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.imessage-header {
+  padding: 10px 16px 14px;
+  border-bottom: 1px solid rgba(107, 114, 128, 0.16);
+  background: rgba(249, 250, 252, 0.88);
+  backdrop-filter: blur(20px);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+.imessage-header-top {
+  color: #3478f6;
+  font-size: 0.93rem;
+}
+
+.imessage-contact {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 6px;
+}
+
+.imessage-avatar {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffd6ac 0%, #ef9e62 100%);
+  color: #3b220d;
+  font-weight: 700;
+}
+
+.imessage-contact p,
+.imessage-contact span {
+  margin: 0;
+  text-align: center;
+}
+
+.imessage-contact-meta {
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+}
+
+.imessage-contact-meta span {
+  color: #6b7280;
+  font-size: 0.77rem;
+}
+
+.imessage-pet-select {
+  border: 0;
+  background: transparent;
+  color: #111827;
+  font: 700 1.02rem -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  text-align: center;
+  appearance: none;
+  max-width: 170px;
+}
+
+.imessage-thread {
+  display: grid;
+  align-content: end;
+  gap: 10px;
+  padding: 16px 12px 18px;
+  overflow: auto;
+}
+
+.imessage-empty {
+  display: grid;
+  gap: 10px;
+  place-items: center;
+  align-content: center;
+  min-height: 100%;
+  padding: 24px;
+  color: #6b7280;
+  text-align: center;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+.imessage-empty p,
+.imessage-empty span {
+  margin: 0;
+}
+
+.imessage-bubble {
+  max-width: 82%;
+  padding: 11px 14px;
+  border-radius: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 1rem;
+  line-height: 1.35;
+  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.06);
+}
+
+.imessage-bubble.incoming {
+  background: #ffffff;
+  color: #111827;
+  border-top-left-radius: 8px;
+}
+
+.imessage-bubble.outgoing {
+  justify-self: end;
+  background: #2f80ff;
+  color: white;
+  border-top-right-radius: 8px;
+}
+
+.imessage-composer {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  border-top: 1px solid rgba(107, 114, 128, 0.14);
+  background: rgba(249, 250, 252, 0.9);
+}
+
+.imessage-composer input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid rgba(107, 114, 128, 0.18);
+  border-radius: 999px;
+  background: white;
+  color: #111827;
+  font: 1rem -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+.imessage-composer button {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 999px;
+  background: #2f80ff;
+  color: white;
+  font: 700 1.1rem -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+.imessage-composer button:disabled {
+  opacity: 0.6;
+}
+
+.imessage-hidden-input {
+  display: none;
+}
+
+.imessage-status-toast {
+  position: absolute;
+  top: 92px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(17, 24, 39, 0.72);
+  color: white;
+  font: 0.75rem -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+.iphone-demo-empty {
+  width: min(420px, 100%);
+  margin: 60px auto;
+  padding: 28px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.8);
+  text-align: center;
+  color: #445170;
+}
+
 .saved-pet-card {
   display: grid;
   gap: 10px;
@@ -305,8 +619,13 @@ code {
 @media (max-width: 860px) {
   .hero-card,
   .builder-grid,
-  .compliance-grid {
+  .compliance-grid,
+  .simulator-shell {
     grid-template-columns: 1fr;
+  }
+
+  .imessage-page {
+    padding: 12px;
   }
 
   .hero-copy h1 {

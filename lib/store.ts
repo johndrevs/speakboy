@@ -175,6 +175,24 @@ export async function listPetProfiles(): Promise<PetProfile[]> {
   );
 }
 
+export async function findPetById(id: string) {
+  if (hasSupabaseConfig()) {
+    const response = await supabaseRequest(
+      `/rest/v1/pet_profiles?id=eq.${encodeURIComponent(id)}&select=*`
+    );
+
+    if (!response.ok) {
+      throw await createStoreError(response, "Unable to load pet profile.");
+    }
+
+    const rows = (await response.json()) as SupabasePetProfileRow[];
+    return rows[0] ? toPetProfile(rows[0]) : null;
+  }
+
+  const store = await readStore();
+  return store.pets.find((pet) => pet.id === id) ?? null;
+}
+
 export async function getThreadMessages(threadKey: string): Promise<ThreadMessage[]> {
   if (hasSupabaseConfig()) {
     const response = await supabaseRequest(
