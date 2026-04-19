@@ -3,11 +3,12 @@ import { mkdir, readFile, writeFile } from "fs/promises";
 import path from "path";
 
 import { hasSupabaseConfig, supabaseRequest } from "@/lib/supabase";
-import type { PetProfile, ThreadMessage } from "@/lib/types";
+import type { PetMemoryItem, PetProfile, ThreadMessage } from "@/lib/types";
 
 type PersistedStore = {
   pets: PetProfile[];
   threads: Record<string, ThreadMessage[]>;
+  memories?: PetMemoryItem[];
 };
 
 type SupabasePetProfileRow = {
@@ -27,6 +28,19 @@ type SupabaseThreadMessageRow = {
   created_at: string;
 };
 
+type SupabasePetMemoryRow = {
+  id: string;
+  pet_id: string;
+  category: PetMemoryItem["category"];
+  subject: PetMemoryItem["subject"];
+  key: string;
+  value: string;
+  source: PetMemoryItem["source"];
+  confidence: number;
+  created_at: string;
+  updated_at: string;
+};
+
 const dataDirectory = path.join(process.cwd(), "data");
 const storePath = path.join(dataDirectory, "store.json");
 
@@ -37,7 +51,8 @@ async function readStore(): Promise<PersistedStore> {
   } catch {
     return {
       pets: [],
-      threads: {}
+      threads: {},
+      memories: []
     };
   }
 }
@@ -278,6 +293,168 @@ export async function clearThreadMessages(threadKey: string) {
   });
 }
 
+export async function listPetMemories(petId: string): Promise<PetMemoryItem[]> {
+  if (hasSupabaseConfig()) {
+    try {
+      const response = await supabaseRequest(
+        `/rest/v1/pet_memory_items?pet_id=eq.${encodeURIComponent(petId)}&select=*&order=updated_at.desc`
+      );
+
+      if (!response.ok) {
+        throw await createStoreError(response, "Unable to load pet memories.");
+      }
+
+      const rows = (await response.json()) as SupabasePetMemoryRow[];
+      return rows.map(toPetMemoryItem);
+    } catch (error) {
+      console.error("Pet memory table unavailable, continuing without memory", {
+        petId,
+        error
+      });
+      return [];
+    }
+  }
+
+  const store = await readStore();
+  return (store.memories ?? [])
+    .filter((memory) => memory.petId === petId)
+    .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+}
+
+export async function upsertPetMemories(
+  petId: string,
+  memories: Omit<PetMemoryItem, "id" | "petId" | "createdAt" | "updatedAt">[]
+): Promise<PetMemoryItem[]> {
+  if (memories.length === 0) {
+    return [];
+  }
+
+  if (hasSupabaseConfig()) {
+    try {
+      const payload = memories.map((memory) => ({
+        pet_id: petId,
+        category: memory.category,
+        subject: memory.subject,
+        key: memory.key,
+        value: memory.value,
+        source: memory.source,
+        confidence: memory.confidence
+      }));
+
+      const response = await supabaseRequest(
+        "/rest/v1/pet_memory_items?on_conflict=pet_id,subject,key",
+        {
+          method: "POST",
+          headers: {
+            Prefer: "return=representation,resolution=merge-duplicates"
+          },
+          body: JSON.stringify(payload)
+        }
+      );
+
+      if (!response.ok) {
+        throw await createStoreError(response, "Unable to save pet memories.");
+      }
+
+      const rows = (await response.json()) as SupabasePetMemoryRow[];
+      return rows.map(toPetMemoryItem);
+    } catch (error) {
+      console.error("Pet memory save failed", {
+        petId,
+        error
+      });
+      throw error instanceof Error
+        ? error
+        : new Error("Unable to save pet memories.");
+    }
+  }
+
+  const store = await readStore();
+  const now = new Date().toISOString();
+  const existingMemories = store.memories ?? [];
+  const nextMemories = [...existingMemories];
+  const touched: PetMemoryItem[] = [];
+
+  for (const memory of memories) {
+    const existingIndex = nextMemories.findIndex(
+      (item) =>
+        item.petId === petId &&
+        item.subject === memory.subject &&
+        item.key === memory.key
+    );
+
+    if (existingIndex >= 0) {
+      const existing = nextMemories[existingIndex];
+      const updated: PetMemoryItem = {
+        ...existing,
+        ...memory,
+        petId,
+        updatedAt: now
+      };
+      nextMemories[existingIndex] = updated;
+      touched.push(updated);
+    } else {
+      const created: PetMemoryItem = {
+        id: randomUUID(),
+        petId,
+        category: memory.category,
+        subject: memory.subject,
+        key: memory.key,
+        value: memory.value,
+        source: memory.source,
+        confidence: memory.confidence,
+        createdAt: now,
+        updatedAt: now
+      };
+      nextMemories.push(created);
+      touched.push(created);
+    }
+  }
+
+  await writeStore({
+    ...store,
+    memories: nextMemories
+  });
+
+  return touched;
+}
+
+export async function clearPetMemories(petId: string) {
+  if (hasSupabaseConfig()) {
+    try {
+      const response = await supabaseRequest(
+        `/rest/v1/pet_memory_items?pet_id=eq.${encodeURIComponent(petId)}`,
+        {
+          method: "DELETE",
+          headers: {
+            Prefer: "return=minimal"
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw await createStoreError(response, "Unable to clear pet memories.");
+      }
+
+      return;
+    } catch (error) {
+      console.error("Pet memory table unavailable, skipping memory clear", {
+        petId,
+        error
+      });
+      return;
+    }
+  }
+
+  const store = await readStore();
+  const nextMemories = (store.memories ?? []).filter((memory) => memory.petId !== petId);
+
+  await writeStore({
+    ...store,
+    memories: nextMemories
+  });
+}
+
 function normalizePhone(number: string) {
   return number.replace(/[^\d+]/g, "");
 }
@@ -303,6 +480,21 @@ function toPetProfile(row: SupabasePetProfileRow): PetProfile {
     backstory: row.backstory,
     twilioNumber: row.twilio_number,
     createdAt: row.created_at
+  };
+}
+
+function toPetMemoryItem(row: SupabasePetMemoryRow): PetMemoryItem {
+  return {
+    id: row.id,
+    petId: row.pet_id,
+    category: row.category,
+    subject: row.subject,
+    key: row.key,
+    value: row.value,
+    source: row.source,
+    confidence: Number(row.confidence),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
   };
 }
 

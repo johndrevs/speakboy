@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 
-import type { PetProfile, ThreadMessage } from "@/lib/types";
+import type { PetMemoryItem, PetProfile, ThreadMessage } from "@/lib/types";
 
 type Props = {
   pets: PetProfile[];
@@ -20,14 +20,16 @@ export function IMessageDemo({ pets }: Props) {
   const [replySource, setReplySource] = useState<"openai" | "fallback" | null>(
     null
   );
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
-
-  useEffect(() => {
-    setHistory([]);
-    setMessage("");
-    setReplySource(null);
-    setStatus(null);
-  }, [selectedPetId]);
+  const [lastExtractedMemories, setLastExtractedMemories] = useState<
+    Array<
+      Pick<
+        PetMemoryItem,
+        "category" | "subject" | "key" | "value" | "source" | "confidence"
+      >
+    >
+  >([]);
 
   useEffect(() => {
     if (!threadRef.current) {
@@ -46,6 +48,43 @@ export function IMessageDemo({ pets }: Props) {
   }
 
   const selectedPet = pets.find((pet) => pet.id === selectedPetId) ?? pets[0];
+
+  useEffect(() => {
+    async function loadHistory() {
+      setIsLoadingHistory(true);
+      setMessage("");
+      setReplySource(null);
+      setLastExtractedMemories([]);
+      setStatus(null);
+
+      try {
+        const params = new URLSearchParams({
+          petId: selectedPet.id,
+          fromNumber
+        });
+        const response = await fetch(`/api/simulate?${params.toString()}`);
+        const payload = (await response.json()) as {
+          message?: string;
+          history?: ThreadMessage[];
+        };
+
+        if (!response.ok) {
+          throw new Error(payload.message ?? "Unable to load simulated thread.");
+        }
+
+        setHistory(payload.history ?? []);
+      } catch (error) {
+        setHistory([]);
+        setStatus(
+          error instanceof Error ? error.message : "Unable to load simulated thread."
+        );
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    }
+
+    void loadHistory();
+  }, [selectedPet.id, fromNumber]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -66,6 +105,7 @@ export function IMessageDemo({ pets }: Props) {
     setIsSending(true);
     setStatus(null);
     setReplySource(null);
+    setLastExtractedMemories([]);
 
     try {
       const response = await fetch("/api/simulate", {
@@ -84,6 +124,14 @@ export function IMessageDemo({ pets }: Props) {
         message?: string;
         replySource?: "openai" | "fallback";
         history?: ThreadMessage[];
+        extractedMemoryCount?: number;
+        savedMemoryCount?: number;
+        extractedMemories?: Array<
+          Pick<
+            PetMemoryItem,
+            "category" | "subject" | "key" | "value" | "source" | "confidence"
+          >
+        >;
       };
 
       if (!response.ok || !payload.history) {
@@ -93,6 +141,7 @@ export function IMessageDemo({ pets }: Props) {
       setHistory(payload.history);
       setMessage("");
       setReplySource(payload.replySource ?? null);
+      setLastExtractedMemories(payload.extractedMemories ?? []);
       setStatus(payload.message ?? "Sent.");
     } catch (error) {
       setHistory((current) =>
@@ -117,6 +166,7 @@ export function IMessageDemo({ pets }: Props) {
     setIsSending(true);
     setStatus(null);
     setReplySource(null);
+    setLastExtractedMemories([]);
 
     try {
       const response = await fetch("/api/simulate/reset", {
@@ -187,7 +237,12 @@ export function IMessageDemo({ pets }: Props) {
         </div>
 
         <div className="imessage-thread" ref={threadRef}>
-          {history.length === 0 ? (
+          {isLoadingHistory ? (
+            <div className="imessage-empty">
+              <p>Loading</p>
+              <span>Pulling the existing thread into view.</span>
+            </div>
+          ) : history.length === 0 ? (
             <div className="imessage-empty">
               <p>Today</p>
               <span>
@@ -233,6 +288,11 @@ export function IMessageDemo({ pets }: Props) {
             {status}
             {replySource
               ? ` (${replySource === "openai" ? "OpenAI" : "Fallback"})`
+              : ""}
+            {lastExtractedMemories.length > 0
+              ? ` Learned: ${lastExtractedMemories
+                  .map((memory) => `${memory.subject}.${memory.key}`)
+                  .join(", ")}`
               : ""}
           </div>
         ) : null}

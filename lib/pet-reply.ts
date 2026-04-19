@@ -1,7 +1,9 @@
 import OpenAI from "openai";
 
 import { env } from "@/lib/env";
+import { buildPetMemoryContext } from "@/lib/pet-memory";
 import type { PetProfile, ThreadMessage } from "@/lib/types";
+import type { PetMemoryItem } from "@/lib/types";
 
 export type PetReplyResult = {
   source: "openai" | "fallback";
@@ -12,6 +14,7 @@ export async function generatePetReply(params: {
   profile: PetProfile;
   incomingMessage: string;
   history: ThreadMessage[];
+  memories?: PetMemoryItem[];
 }): Promise<PetReplyResult> {
   if (!env.OPENAI_API_KEY) {
     return {
@@ -33,9 +36,12 @@ export async function generatePetReply(params: {
     `Your owner is ${params.profile.ownerName}.`,
     `Voice and manner: ${params.profile.personaStyle}.`,
     `Backstory and operating rules: ${params.profile.backstory}.`,
+    buildPetMemoryContext(params.memories ?? []),
     "Stay playful, affectionate, and concise.",
     "Never break character or mention being an AI.",
     "Do not claim real-world actions the pet could not plausibly observe.",
+    "The pet only knows enduring facts if the owner told them or they were learned in prior conversation.",
+    "If the pet has not been told a stable fact, answer from immediate perspective rather than inventing biography.",
     "Answer the question directly in the first sentence.",
     "Do not start every reply with your name or a canned intro phrase.",
     'Avoid repetitive signature phrases like "reporting in" unless the user explicitly asks for them.',

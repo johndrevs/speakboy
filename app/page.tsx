@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PetPersonaManager } from "@/components/pet-persona-manager";
 import { PersonaPreview } from "@/components/persona-preview";
 import { SmsSimulator } from "@/components/sms-simulator";
@@ -66,6 +67,18 @@ export default async function HomePage() {
           pet&apos;s reply, and build thread history without Twilio delivery.
         </p>
         <SmsSimulator pets={pets} />
+      </section>
+
+      <section className="panel simulator-panel">
+        <p className="section-label">Memory</p>
+        <h2>Give your pet a personality bath.</h2>
+        <p className="section-copy">
+          Open the dedicated memory page to inspect learned long-term memories
+          and clear them when you want the pet to start fresh.
+        </p>
+        <Link className="memory-back-link" href="/memory">
+          Open memory bath
+        </Link>
       </section>
     </main>
   );

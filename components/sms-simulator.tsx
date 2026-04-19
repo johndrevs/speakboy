@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 
-import type { PetProfile, ThreadMessage } from "@/lib/types";
+import type { PetMemoryItem, PetProfile, ThreadMessage } from "@/lib/types";
 
 type Props = {
   pets: PetProfile[];
@@ -19,6 +19,14 @@ export function SmsSimulator({ pets }: Props) {
   const [replySource, setReplySource] = useState<"openai" | "fallback" | null>(
     null
   );
+  const [extractedMemories, setExtractedMemories] = useState<
+    Array<
+      Pick<
+        PetMemoryItem,
+        "category" | "subject" | "key" | "value" | "source" | "confidence"
+      >
+    >
+  >([]);
   const [status, setStatus] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
 
@@ -26,6 +34,7 @@ export function SmsSimulator({ pets }: Props) {
     setHistory([]);
     setReplyPreview(null);
     setReplySource(null);
+    setExtractedMemories([]);
     setStatus(null);
   }, [selectedPetId]);
 
@@ -47,6 +56,7 @@ export function SmsSimulator({ pets }: Props) {
     setStatus(null);
     setReplyPreview(null);
     setReplySource(null);
+    setExtractedMemories([]);
 
     try {
       const response = await fetch("/api/simulate", {
@@ -66,6 +76,12 @@ export function SmsSimulator({ pets }: Props) {
         reply?: string;
         replySource?: "openai" | "fallback";
         history?: ThreadMessage[];
+        extractedMemories?: Array<
+          Pick<
+            PetMemoryItem,
+            "category" | "subject" | "key" | "value" | "source" | "confidence"
+          >
+        >;
       };
 
       if (!response.ok || !payload.history) {
@@ -75,6 +91,7 @@ export function SmsSimulator({ pets }: Props) {
       setHistory(payload.history);
       setReplyPreview(payload.reply ?? null);
       setReplySource(payload.replySource ?? null);
+      setExtractedMemories(payload.extractedMemories ?? []);
       setStatus(payload.message ?? "Simulated SMS exchange created.");
       setMessage("");
     } catch (error) {
@@ -110,6 +127,7 @@ export function SmsSimulator({ pets }: Props) {
       setHistory([]);
       setReplyPreview(null);
       setReplySource(null);
+      setExtractedMemories([]);
       setStatus(payload.message ?? "Thread reset.");
     } catch (error) {
       setStatus(
@@ -195,6 +213,15 @@ export function SmsSimulator({ pets }: Props) {
             ) : null}
             {replyPreview ? (
               <p className="simulator-preview">Latest reply: {replyPreview}</p>
+            ) : null}
+            {extractedMemories.length > 0 ? (
+              <div className="simulator-memory-preview">
+                {extractedMemories.map((memory) => (
+                  <p key={`${memory.subject}-${memory.key}`}>
+                    Learned {memory.subject}.{memory.key} = {memory.value} ({memory.source})
+                  </p>
+                ))}
+              </div>
             ) : null}
           </div>
         </div>

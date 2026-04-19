@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 import twilio from "twilio";
 
+import { extractPetMemories } from "@/lib/pet-memory";
 import { generatePetReply } from "@/lib/pet-reply";
 import {
   appendThreadMessage,
   findPetByTwilioNumber,
-  getThreadMessages
+  getThreadMessages,
+  listPetMemories,
+  upsertPetMemories
 } from "@/lib/store";
 import { validateTwilioRequest } from "@/lib/twilio-request-validator";
 
@@ -47,6 +50,7 @@ export async function POST(request: Request) {
 
   const threadKey = `${from}:${to}`;
   const history = await getThreadMessages(threadKey);
+  const memories = await listPetMemories(profile.id);
 
   await appendThreadMessage(threadKey, {
     role: "user",
@@ -56,13 +60,31 @@ export async function POST(request: Request) {
   const reply = await generatePetReply({
     profile,
     incomingMessage: body,
-    history
+    history,
+    memories
   });
 
   await appendThreadMessage(threadKey, {
     role: "assistant",
     body: reply.text
   });
+
+  const updatedHistory = await getThreadMessages(threadKey);
+  const extractedMemories = await extractPetMemories({
+    profile,
+    incomingMessage: body,
+    assistantReply: reply.text,
+    history: updatedHistory,
+    existingMemories: memories
+  });
+  try {
+    await upsertPetMemories(profile.id, extractedMemories);
+  } catch (error) {
+    console.error("Twilio memory save failed", {
+      petId: profile.id,
+      error
+    });
+  }
 
   messagingResponse.message(reply.text);
 
