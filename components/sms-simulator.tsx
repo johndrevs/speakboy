@@ -16,12 +16,16 @@ export function SmsSimulator({ pets }: Props) {
   const [message, setMessage] = useState("");
   const [history, setHistory] = useState<ThreadMessage[]>([]);
   const [replyPreview, setReplyPreview] = useState<string | null>(null);
+  const [replySource, setReplySource] = useState<"openai" | "fallback" | null>(
+    null
+  );
   const [status, setStatus] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
 
   useEffect(() => {
     setHistory([]);
     setReplyPreview(null);
+    setReplySource(null);
     setStatus(null);
   }, [selectedPetId]);
 
@@ -35,12 +39,14 @@ export function SmsSimulator({ pets }: Props) {
   }
 
   const selectedPet = pets.find((pet) => pet.id === selectedPetId) ?? pets[0];
+  const threadKey = `${fromNumber}:${selectedPet.twilioNumber}`;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSending(true);
     setStatus(null);
     setReplyPreview(null);
+    setReplySource(null);
 
     try {
       const response = await fetch("/api/simulate", {
@@ -58,6 +64,7 @@ export function SmsSimulator({ pets }: Props) {
       const payload = (await response.json()) as {
         message?: string;
         reply?: string;
+        replySource?: "openai" | "fallback";
         history?: ThreadMessage[];
       };
 
@@ -67,12 +74,47 @@ export function SmsSimulator({ pets }: Props) {
 
       setHistory(payload.history);
       setReplyPreview(payload.reply ?? null);
+      setReplySource(payload.replySource ?? null);
       setStatus(payload.message ?? "Simulated SMS exchange created.");
       setMessage("");
     } catch (error) {
       const nextMessage =
         error instanceof Error ? error.message : "Unable to simulate message.";
       setStatus(nextMessage);
+    } finally {
+      setIsSending(false);
+    }
+  }
+
+  async function handleResetThread() {
+    setIsSending(true);
+    setStatus(null);
+
+    try {
+      const response = await fetch("/api/simulate/reset", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          petId: selectedPet.id,
+          fromNumber
+        })
+      });
+
+      const payload = (await response.json()) as { message?: string };
+      if (!response.ok) {
+        throw new Error(payload.message ?? "Unable to reset thread.");
+      }
+
+      setHistory([]);
+      setReplyPreview(null);
+      setReplySource(null);
+      setStatus(payload.message ?? "Thread reset.");
+    } catch (error) {
+      setStatus(
+        error instanceof Error ? error.message : "Unable to reset thread."
+      );
     } finally {
       setIsSending(false);
     }
@@ -117,10 +159,21 @@ export function SmsSimulator({ pets }: Props) {
         <button disabled={isSending} type="submit">
           {isSending ? "Simulating..." : "Send simulated SMS"}
         </button>
+        <button
+          className="secondary-button"
+          disabled={isSending}
+          onClick={handleResetThread}
+          type="button"
+        >
+          Reset thread
+        </button>
 
         <p className="helper-text">
           This uses the same persona reply engine and message history logic as
           the Twilio webhook, but keeps the demo fully inside SpeakBoy.
+        </p>
+        <p className="helper-text">
+          Active thread key: <code>{threadKey}</code>
         </p>
 
         {status ? <div className="status-banner">{status}</div> : null}
@@ -134,9 +187,16 @@ export function SmsSimulator({ pets }: Props) {
               {selectedPet.petName} on SMS <span>{selectedPet.twilioNumber}</span>
             </h3>
           </div>
-          {replyPreview ? (
-            <p className="simulator-preview">Latest reply: {replyPreview}</p>
-          ) : null}
+          <div className="simulator-preview-stack">
+            {replySource ? (
+              <p className="simulator-source-badge">
+                Reply source: {replySource === "openai" ? "OpenAI" : "Fallback"}
+              </p>
+            ) : null}
+            {replyPreview ? (
+              <p className="simulator-preview">Latest reply: {replyPreview}</p>
+            ) : null}
+          </div>
         </div>
 
         {history.length === 0 ? (

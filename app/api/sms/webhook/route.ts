@@ -61,10 +61,10 @@ export async function POST(request: Request) {
 
   await appendThreadMessage(threadKey, {
     role: "assistant",
-    body: reply
+    body: reply.text
   });
 
-  messagingResponse.message(reply);
+  messagingResponse.message(reply.text);
 
   return new NextResponse(messagingResponse.toString(), {
     headers: {

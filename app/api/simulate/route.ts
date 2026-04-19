@@ -45,15 +45,19 @@ export async function POST(request: Request) {
 
     await appendThreadMessage(threadKey, {
       role: "assistant",
-      body: reply
+      body: reply.text
     });
 
     const updatedHistory = await getThreadMessages(threadKey);
 
     return NextResponse.json({
-      message: "Simulated SMS exchange created.",
+      message:
+        reply.source === "openai"
+          ? "Simulated SMS exchange created with OpenAI."
+          : "Simulated SMS exchange created using fallback reply.",
       threadKey,
-      reply,
+      reply: reply.text,
+      replySource: reply.source,
       history: updatedHistory
     });
   } catch (error) {

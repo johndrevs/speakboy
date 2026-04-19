@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 
 import type { PetProfile, ThreadMessage } from "@/lib/types";
 
@@ -11,18 +11,31 @@ type Props = {
 const defaultFromNumber = "+13125550000";
 
 export function IMessageDemo({ pets }: Props) {
+  const threadRef = useRef<HTMLDivElement | null>(null);
   const [selectedPetId, setSelectedPetId] = useState<string>(pets[0]?.id ?? "");
   const [fromNumber, setFromNumber] = useState(defaultFromNumber);
   const [message, setMessage] = useState("");
   const [history, setHistory] = useState<ThreadMessage[]>([]);
   const [isSending, setIsSending] = useState(false);
+  const [replySource, setReplySource] = useState<"openai" | "fallback" | null>(
+    null
+  );
   const [status, setStatus] = useState<string | null>(null);
 
   useEffect(() => {
     setHistory([]);
     setMessage("");
+    setReplySource(null);
     setStatus(null);
   }, [selectedPetId]);
+
+  useEffect(() => {
+    if (!threadRef.current) {
+      return;
+    }
+
+    threadRef.current.scrollTop = threadRef.current.scrollHeight;
+  }, [history]);
 
   if (pets.length === 0) {
     return (
@@ -40,8 +53,19 @@ export function IMessageDemo({ pets }: Props) {
       return;
     }
 
+    const outgoingMessage = message;
+    const optimisticHistory: ThreadMessage[] = [
+      ...history,
+      {
+        role: "user",
+        body: outgoingMessage
+      }
+    ];
+
+    setHistory(optimisticHistory);
     setIsSending(true);
     setStatus(null);
+    setReplySource(null);
 
     try {
       const response = await fetch("/api/simulate", {
@@ -52,12 +76,13 @@ export function IMessageDemo({ pets }: Props) {
         body: JSON.stringify({
           petId: selectedPet.id,
           fromNumber,
-          message
+          message: outgoingMessage
         })
       });
 
       const payload = (await response.json()) as {
         message?: string;
+        replySource?: "openai" | "fallback";
         history?: ThreadMessage[];
       };
 
@@ -67,10 +92,55 @@ export function IMessageDemo({ pets }: Props) {
 
       setHistory(payload.history);
       setMessage("");
+      setReplySource(payload.replySource ?? null);
       setStatus(payload.message ?? "Sent.");
     } catch (error) {
+      setHistory((current) =>
+        current.filter(
+          (entry, index) =>
+            !(
+              index === current.length - 1 &&
+              entry.role === "user" &&
+              entry.body === outgoingMessage
+            )
+        )
+      );
       setStatus(
         error instanceof Error ? error.message : "Unable to simulate message."
+      );
+    } finally {
+      setIsSending(false);
+    }
+  }
+
+  async function handleResetThread() {
+    setIsSending(true);
+    setStatus(null);
+    setReplySource(null);
+
+    try {
+      const response = await fetch("/api/simulate/reset", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          petId: selectedPet.id,
+          fromNumber
+        })
+      });
+
+      const payload = (await response.json()) as { message?: string };
+      if (!response.ok) {
+        throw new Error(payload.message ?? "Unable to reset thread.");
+      }
+
+      setHistory([]);
+      setMessage("");
+      setStatus(payload.message ?? "Thread reset.");
+    } catch (error) {
+      setStatus(
+        error instanceof Error ? error.message : "Unable to reset thread."
       );
     } finally {
       setIsSending(false);
@@ -104,10 +174,19 @@ export function IMessageDemo({ pets }: Props) {
               </select>
               <span>{selectedPet.twilioNumber}</span>
             </div>
+            <button
+              aria-label="Reset current thread"
+              className="imessage-reset-button"
+              disabled={isSending}
+              onClick={handleResetThread}
+              type="button"
+            >
+              Reset
+            </button>
           </div>
         </div>
 
-        <div className="imessage-thread">
+        <div className="imessage-thread" ref={threadRef}>
           {history.length === 0 ? (
             <div className="imessage-empty">
               <p>Today</p>
@@ -118,10 +197,14 @@ export function IMessageDemo({ pets }: Props) {
           ) : (
             history.map((entry, index) => (
               <div
-                className={`imessage-bubble ${entry.role === "assistant" ? "incoming" : "outgoing"}`}
+                className={`imessage-row ${entry.role === "assistant" ? "incoming" : "outgoing"}`}
                 key={`${entry.role}-${index}-${entry.body}`}
               >
-                {entry.body}
+                <div
+                  className={`imessage-bubble ${entry.role === "assistant" ? "incoming" : "outgoing"}`}
+                >
+                  {entry.body}
+                </div>
               </div>
             ))
           )}
@@ -145,7 +228,14 @@ export function IMessageDemo({ pets }: Props) {
           tabIndex={-1}
           value={fromNumber}
         />
-        {status ? <div className="imessage-status-toast">{status}</div> : null}
+        {status ? (
+          <div className="imessage-status-toast">
+            {status}
+            {replySource
+              ? ` (${replySource === "openai" ? "OpenAI" : "Fallback"})`
+              : ""}
+          </div>
+        ) : null}
       </div>
     </div>
   );

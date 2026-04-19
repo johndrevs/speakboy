@@ -249,6 +249,35 @@ export async function appendThreadMessage(
   });
 }
 
+export async function clearThreadMessages(threadKey: string) {
+  if (hasSupabaseConfig()) {
+    const response = await supabaseRequest(
+      `/rest/v1/thread_messages?thread_key=eq.${encodeURIComponent(threadKey)}`,
+      {
+        method: "DELETE",
+        headers: {
+          Prefer: "return=minimal"
+        }
+      }
+    );
+
+    if (!response.ok) {
+      throw await createStoreError(response, "Unable to clear thread messages.");
+    }
+
+    return;
+  }
+
+  const store = await readStore();
+  const nextThreads = { ...store.threads };
+  delete nextThreads[threadKey];
+
+  await writeStore({
+    ...store,
+    threads: nextThreads
+  });
+}
+
 function normalizePhone(number: string) {
   return number.replace(/[^\d+]/g, "");
 }
