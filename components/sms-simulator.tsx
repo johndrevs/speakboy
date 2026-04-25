@@ -75,6 +75,8 @@ export function SmsSimulator({ pets }: Props) {
         message?: string;
         reply?: string;
         replySource?: "openai" | "fallback";
+        replyFallbackReason?: "missing_api_key" | "empty_output" | "openai_error" | null;
+        replyErrorMessage?: string | null;
         history?: ThreadMessage[];
         extractedMemories?: Array<
           Pick<
@@ -92,7 +94,12 @@ export function SmsSimulator({ pets }: Props) {
       setReplyPreview(payload.reply ?? null);
       setReplySource(payload.replySource ?? null);
       setExtractedMemories(payload.extractedMemories ?? []);
-      setStatus(payload.message ?? "Simulated SMS exchange created.");
+      setStatus(
+        payload.message ??
+          (payload.replySource === "fallback"
+            ? `Fallback reply used (${payload.replyFallbackReason ?? "unknown_reason"}${payload.replyErrorMessage ? `: ${payload.replyErrorMessage}` : ""}).`
+            : "Simulated SMS exchange created.")
+      );
       setMessage("");
     } catch (error) {
       const nextMessage =

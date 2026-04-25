@@ -123,6 +123,8 @@ export function IMessageDemo({ pets }: Props) {
       const payload = (await response.json()) as {
         message?: string;
         replySource?: "openai" | "fallback";
+        replyFallbackReason?: "missing_api_key" | "empty_output" | "openai_error" | null;
+        replyErrorMessage?: string | null;
         history?: ThreadMessage[];
         extractedMemoryCount?: number;
         savedMemoryCount?: number;
@@ -142,7 +144,12 @@ export function IMessageDemo({ pets }: Props) {
       setMessage("");
       setReplySource(payload.replySource ?? null);
       setLastExtractedMemories(payload.extractedMemories ?? []);
-      setStatus(payload.message ?? "Sent.");
+      setStatus(
+        payload.message ??
+          (payload.replySource === "fallback"
+            ? `Fallback reply used (${payload.replyFallbackReason ?? "unknown_reason"}${payload.replyErrorMessage ? `: ${payload.replyErrorMessage}` : ""}).`
+            : "Sent.")
+      );
     } catch (error) {
       setHistory((current) =>
         current.filter(

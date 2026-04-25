@@ -114,10 +114,12 @@ export async function POST(request: Request) {
       message:
         reply.source === "openai"
           ? `Simulated SMS exchange created with OpenAI. Extracted ${extractedMemoryCount} memory item${extractedMemoryCount === 1 ? "" : "s"} and saved ${savedMemoryCount}.${memorySaveError ? ` Save error: ${memorySaveError}` : ""}`
-          : `Simulated SMS exchange created using fallback reply. Extracted ${extractedMemoryCount} memory item${extractedMemoryCount === 1 ? "" : "s"} and saved ${savedMemoryCount}.${memorySaveError ? ` Save error: ${memorySaveError}` : ""}`,
+          : `Simulated SMS exchange created using fallback reply (${reply.fallbackReason ?? "unknown_reason"}${reply.errorMessage ? `: ${reply.errorMessage}` : ""}). Extracted ${extractedMemoryCount} memory item${extractedMemoryCount === 1 ? "" : "s"} and saved ${savedMemoryCount}.${memorySaveError ? ` Save error: ${memorySaveError}` : ""}`,
       threadKey,
       reply: reply.text,
       replySource: reply.source,
+      replyFallbackReason: reply.fallbackReason ?? null,
+      replyErrorMessage: reply.errorMessage ?? null,
       history: updatedHistory,
       extractedMemoryCount,
       savedMemoryCount,

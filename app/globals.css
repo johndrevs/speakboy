@@ -368,6 +368,13 @@ code {
   background: rgba(255, 255, 255, 0.55);
 }
 
+.memory-card-topline {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .memory-key,
 .memory-value,
 .memory-meta {
@@ -390,6 +397,29 @@ code {
 .memory-meta,
 .memory-empty {
   color: var(--muted);
+}
+
+.memory-scrub-button {
+  border: 1px solid rgba(184, 86, 70, 0.24);
+  border-radius: 999px;
+  background: rgba(184, 86, 70, 0.08);
+  color: #9c3c2a;
+  padding: 7px 12px;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.memory-scrub-button:hover:enabled {
+  background: rgba(184, 86, 70, 0.14);
+  border-color: rgba(184, 86, 70, 0.36);
+}
+
+.memory-scrub-button:disabled {
+  cursor: wait;
+  opacity: 0.66;
 }
 
 .simulator-shell {

@@ -14,6 +14,7 @@ export function PetMemoryInspector({ pets }: Props) {
   const [status, setStatus] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
+  const [scrubbingMemoryId, setScrubbingMemoryId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!selectedPetId) {
@@ -117,6 +118,34 @@ export function PetMemoryInspector({ pets }: Props) {
     }
   }
 
+  async function handleScrub(memoryId: string) {
+    setScrubbingMemoryId(memoryId);
+    setStatus(null);
+
+    try {
+      const response = await fetch(
+        `/api/pets/${selectedPetId}/memory?memoryId=${encodeURIComponent(memoryId)}`,
+        {
+          method: "DELETE"
+        }
+      );
+      const payload = (await response.json()) as { message?: string };
+
+      if (!response.ok) {
+        throw new Error(payload.message ?? "Unable to scrub memory.");
+      }
+
+      setMemories((current) => current.filter((memory) => memory.id !== memoryId));
+      setStatus(payload.message ?? "Memory scrubbed.");
+    } catch (error) {
+      setStatus(
+        error instanceof Error ? error.message : "Unable to scrub memory."
+      );
+    } finally {
+      setScrubbingMemoryId(null);
+    }
+  }
+
   return (
     <div className="memory-shell">
       <div className="memory-toolbar">
@@ -136,7 +165,7 @@ export function PetMemoryInspector({ pets }: Props) {
 
         <button
           className="secondary-button"
-          disabled={isClearing || isLoading}
+          disabled={isClearing || isLoading || Boolean(scrubbingMemoryId)}
           onClick={handleRefresh}
           type="button"
         >
@@ -145,7 +174,7 @@ export function PetMemoryInspector({ pets }: Props) {
 
         <button
           className="secondary-button"
-          disabled={isClearing || isLoading}
+          disabled={isClearing || isLoading || Boolean(scrubbingMemoryId)}
           onClick={handleBath}
           type="button"
         >
@@ -171,9 +200,19 @@ export function PetMemoryInspector({ pets }: Props) {
         <div className="memory-grid">
           {memories.map((memory) => (
             <article className="memory-card" key={memory.id}>
-              <p className="memory-key">
-                {memory.subject}.{memory.key}
-              </p>
+              <div className="memory-card-topline">
+                <p className="memory-key">
+                  {memory.subject}.{memory.key}
+                </p>
+                <button
+                  className="memory-scrub-button"
+                  disabled={isLoading || isClearing || scrubbingMemoryId === memory.id}
+                  onClick={() => handleScrub(memory.id)}
+                  type="button"
+                >
+                  {scrubbingMemoryId === memory.id ? "Scrubbing..." : "Scrub"}
+                </button>
+              </div>
               <p className="memory-value">{memory.value}</p>
               <p className="memory-meta">
                 {memory.category} · {memory.source} · confidence{" "}

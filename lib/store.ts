@@ -455,6 +455,47 @@ export async function clearPetMemories(petId: string) {
   });
 }
 
+export async function deletePetMemory(petId: string, memoryId: string) {
+  if (hasSupabaseConfig()) {
+    try {
+      const response = await supabaseRequest(
+        `/rest/v1/pet_memory_items?id=eq.${encodeURIComponent(memoryId)}&pet_id=eq.${encodeURIComponent(petId)}`,
+        {
+          method: "DELETE",
+          headers: {
+            Prefer: "return=minimal"
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw await createStoreError(response, "Unable to scrub pet memory.");
+      }
+
+      return;
+    } catch (error) {
+      console.error("Pet memory scrub failed", {
+        petId,
+        memoryId,
+        error
+      });
+      throw error instanceof Error
+        ? error
+        : new Error("Unable to scrub pet memory.");
+    }
+  }
+
+  const store = await readStore();
+  const nextMemories = (store.memories ?? []).filter(
+    (memory) => !(memory.petId === petId && memory.id === memoryId)
+  );
+
+  await writeStore({
+    ...store,
+    memories: nextMemories
+  });
+}
+
 function normalizePhone(number: string) {
   return number.replace(/[^\d+]/g, "");
 }

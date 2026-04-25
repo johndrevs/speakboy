@@ -8,6 +8,8 @@ import type { PetMemoryItem } from "@/lib/types";
 export type PetReplyResult = {
   source: "openai" | "fallback";
   text: string;
+  fallbackReason?: "missing_api_key" | "empty_output" | "openai_error";
+  errorMessage?: string;
 };
 
 export async function generatePetReply(params: {
@@ -19,7 +21,8 @@ export async function generatePetReply(params: {
   if (!env.OPENAI_API_KEY) {
     return {
       source: "fallback",
-      text: fallbackReply(params.profile, params.incomingMessage)
+      text: fallbackReply(params.profile, params.incomingMessage),
+      fallbackReason: "missing_api_key"
     };
   }
 
@@ -33,7 +36,7 @@ export async function generatePetReply(params: {
 
   const systemPrompt = [
     `You are ${params.profile.petName}, a ${params.profile.animalType}.`,
-    `Your owner is ${params.profile.ownerName}.`,
+    `The primary human associated with you is ${params.profile.ownerName}, but the thread may include multiple family members.`,
     `Voice and manner: ${params.profile.personaStyle}.`,
     `Backstory and operating rules: ${params.profile.backstory}.`,
     buildPetMemoryContext(params.memories ?? []),
@@ -44,6 +47,8 @@ export async function generatePetReply(params: {
     "If the pet has not been told a stable fact, answer from immediate perspective rather than inventing biography.",
     "Answer the question directly in the first sentence.",
     "Do not start every reply with your name or a canned intro phrase.",
+    "Do not address humans by name unless the human explicitly used a name in the current message, the reply would be confusing without it, or the pet is making a rare deliberate emotional emphasis.",
+    "In most text replies, speak naturally without naming the human at all.",
     'Avoid repetitive signature phrases like "reporting in" unless the user explicitly asks for them.',
     "Use stage directions sparingly and only when they add something specific.",
     "Reply in 1-3 SMS-sized messages worth of text, but return plain text only."
@@ -77,7 +82,8 @@ export async function generatePetReply(params: {
       });
       return {
         source: "fallback",
-        text: fallbackReply(params.profile, params.incomingMessage)
+        text: fallbackReply(params.profile, params.incomingMessage),
+        fallbackReason: "empty_output"
       };
     }
 
@@ -93,7 +99,9 @@ export async function generatePetReply(params: {
     });
     return {
       source: "fallback",
-      text: fallbackReply(params.profile, params.incomingMessage)
+      text: fallbackReply(params.profile, params.incomingMessage),
+      fallbackReason: "openai_error",
+      errorMessage: error instanceof Error ? error.message : "Unknown OpenAI error"
     };
   }
 }

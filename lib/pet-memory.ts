@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { z } from "zod";
 
 import { env } from "@/lib/env";
 import type { PetMemoryItem, PetProfile, ThreadMessage } from "@/lib/types";
@@ -9,8 +10,30 @@ type MemoryDraft = Omit<
 >;
 
 type ExtractionResult = {
-  items: MemoryDraft[];
+  memory_items?: MemoryDraft[];
+  personality_inserts?: PersonalityInsert[];
 };
+
+type PersonalityInsert = {
+  trait: PersonalityTrait;
+  summary: string;
+  confidence: number;
+};
+
+const personalityTraits = [
+  "curiosity",
+  "sociability",
+  "affection",
+  "playfulness",
+  "boldness",
+  "sensitivity",
+  "calmness",
+  "food_motivation",
+  "protectiveness",
+  "stubbornness"
+] as const;
+
+type PersonalityTrait = (typeof personalityTraits)[number];
 
 const validCategories = new Set<PetMemoryItem["category"]>([
   "identity",
@@ -32,6 +55,31 @@ const validSources = new Set<PetMemoryItem["source"]>([
   "inferred_from_pattern",
   "expressed_by_pet"
 ]);
+
+const modelMemoryItemSchema = z.object({
+  category: z.enum(["identity", "relationship", "preference", "routine", "biography"]),
+  subject: z.enum(["self", "owner", "other"]),
+  key: z.string().min(1),
+  value: z.string().min(1),
+  source: z.enum([
+    "told_by_owner",
+    "observed_in_conversation",
+    "inferred_from_pattern",
+    "expressed_by_pet"
+  ]),
+  confidence: z.number().min(0).max(1)
+});
+
+const modelPersonalityInsertSchema = z.object({
+  trait: z.enum(personalityTraits),
+  summary: z.string().min(1),
+  confidence: z.number().min(0).max(1)
+});
+
+const modelExtractionSchema = z.object({
+  memory_items: z.array(modelMemoryItemSchema).default([]),
+  personality_inserts: z.array(modelPersonalityInsertSchema).default([])
+});
 
 export async function extractPetMemories(params: {
   profile: PetProfile;
@@ -57,6 +105,29 @@ export async function extractPetMemories(params: {
     apiKey: env.OPENAI_API_KEY
   });
 
+  const modelSuggestedItems = await extractModelSuggestedMemories({
+    client,
+    profile: params.profile,
+    incomingMessage: params.incomingMessage,
+    assistantReply: params.assistantReply,
+    history: params.history,
+    existingMemories: params.existingMemories
+  });
+
+  return dedupeMemoryDrafts([
+    ...heuristicItems,
+    ...modelSuggestedItems
+  ]);
+}
+
+async function extractModelSuggestedMemories(params: {
+  client: OpenAI;
+  profile: PetProfile;
+  incomingMessage: string;
+  assistantReply: string;
+  history: ThreadMessage[];
+  existingMemories: PetMemoryItem[];
+}): Promise<MemoryDraft[]> {
   const memorySummary = summarizeMemories(params.existingMemories);
   const historyText = params.history
     .slice(-6)
@@ -66,17 +137,23 @@ export async function extractPetMemories(params: {
   const prompt = [
     `You are extracting long-term memory for ${params.profile.petName}, a ${params.profile.animalType}.`,
     "The pet has no privileged knowledge about its own existential makeup.",
+    "You may suggest two things: factual memory_items and personality_inserts.",
     "Only store facts the owner explicitly told the pet, or highly reliable stable patterns observed in conversation.",
-    "Prefer owner-told facts over inference.",
-    "Do not store one-off jokes, temporary emotions, or generic chatter.",
-    "Return JSON only with an `items` array.",
-    "Each item must include: category, subject, key, value, source, confidence.",
+    "Prefer owner-told facts over inference. Be conservative.",
+    "Do not store one-off jokes, temporary emotions, generic chatter, or decorative wording.",
+    "Use memory_items for stable facts, routines, relationships, preferences, and biography.",
+    `Use personality_inserts only for slow-burn tendencies and only from this trait list: ${personalityTraits.join(", ")}.`,
+    "Personality inserts should be short pet-personality summaries, not numeric scores.",
+    "Return JSON only with keys `memory_items` and `personality_inserts`.",
+    "Each memory_item must include: category, subject, key, value, source, confidence.",
+    "Each personality_insert must include: trait, summary, confidence.",
     "Use confidence from 0 to 1.",
-    "Use short snake_case keys."
+    "Use short snake_case keys for memory items.",
+    "If nothing should be stored, return empty arrays."
   ].join(" ");
 
   try {
-    const response = await client.responses.create({
+    const response = await params.client.responses.create({
       model: env.OPENAI_MODEL,
       input: [
         {
@@ -97,21 +174,24 @@ export async function extractPetMemories(params: {
 
     const raw = response.output_text.trim();
     if (!raw) {
-      return heuristicItems;
+      return [];
     }
 
-    const parsed = JSON.parse(raw) as ExtractionResult;
+    const parsed = modelExtractionSchema.parse(
+      JSON.parse(extractJsonObject(raw))
+    ) as ExtractionResult;
+
     return dedupeMemoryDrafts([
-      ...heuristicItems,
-      ...(parsed.items ?? []).filter(isValidMemoryDraft)
+      ...(parsed.memory_items ?? []).filter(isValidMemoryDraft),
+      ...toPersonalityMemoryDrafts(parsed.personality_inserts ?? [])
     ]);
   } catch (error) {
-    console.error("Pet memory extraction failed", {
+    console.error("Pet model memory extraction failed", {
       petId: params.profile.id,
       petName: params.profile.petName,
       error
     });
-    return heuristicItems;
+    return [];
   }
 }
 
@@ -138,6 +218,38 @@ function summarizeMemories(memories: PetMemoryItem[]) {
     .join("\n");
 }
 
+function extractJsonObject(raw: string) {
+  const fencedMatch = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fencedMatch) {
+    return fencedMatch[1].trim();
+  }
+
+  const firstBrace = raw.indexOf("{");
+  const lastBrace = raw.lastIndexOf("}");
+  if (firstBrace >= 0 && lastBrace > firstBrace) {
+    return raw.slice(firstBrace, lastBrace + 1);
+  }
+
+  return raw;
+}
+
+function toPersonalityMemoryDrafts(inserts: PersonalityInsert[]): MemoryDraft[] {
+  return inserts
+    .filter((insert) => insert.summary.trim().length > 0)
+    .map((insert) => ({
+      category: "identity" as const,
+      subject: "self" as const,
+      key: `trait_${insert.trait}`,
+      value: normalizeValue(insert.summary),
+      source: "inferred_from_pattern" as const,
+      confidence: clampConfidence(insert.confidence, 0.55, 0.88)
+    }));
+}
+
+function clampConfidence(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
+}
+
 function isValidMemoryDraft(item: MemoryDraft | undefined): item is MemoryDraft {
   return Boolean(
     item &&
@@ -159,6 +271,32 @@ function extractHeuristicMemories(message: string): MemoryDraft[] {
 
   for (const sentence of sentences) {
     const trimmed = sentence.trim();
+    const householdMembers =
+      matchHouseholdMembers(trimmed, [
+        /\bin your household (?:is|are)\s+(.+)$/i,
+        /\b(?:your|our) household (?:is|are)\s+(.+)$/i,
+        /\b(?:your|our) household members? (?:is|are)\s+(.+)$/i,
+        /\b(?:your|our) family (?:is|are)\s+(.+)$/i,
+        /\b(?:your|our) family members? (?:is|are)\s+(.+)$/i,
+        /\b(?:your|our) people (?:is|are)\s+(.+)$/i,
+        /\b(?:your|our) people include\s+(.+)$/i,
+        /\b(?:your|our) household includes\s+(.+)$/i,
+        /\b(?:your|our) family includes\s+(.+)$/i,
+        /\b(?:your|our) home includes\s+(.+)$/i,
+        /\bat home (?:it(?:'s| is)|you have)\s+(.+)$/i,
+        /\bin the house (?:it(?:'s| is)|you have)\s+(.+)$/i,
+        /\byou live with\s+(.+)$/i,
+        /\byou stay with\s+(.+)$/i,
+        /\byou share the house with\s+(.+)$/i,
+        /\byou share your home with\s+(.+)$/i,
+        /\byou live at home with\s+(.+)$/i,
+        /\bwho lives with you is\s+(.+)$/i,
+        /\bthe people in your house are\s+(.+)$/i,
+        /\bthe people at home are\s+(.+)$/i
+      ]);
+    if (householdMembers.length > 0) {
+      items.push(makeHouseholdMemoryDraft(householdMembers, "told_by_owner", 0.97));
+    }
 
     const liveMatch = trimmed.match(/\bwe live in ([a-zA-Z\s]+)$/i);
     if (liveMatch) {
@@ -350,6 +488,120 @@ function normalizeValue(value: string) {
   return value.trim().replace(/\s+/g, " ");
 }
 
+function splitNameList(value: string) {
+  const normalized = normalizeValue(value)
+    .replace(/\s+(?:and|&|\+|\/)\s+/gi, ", ")
+    .replace(/\s*,\s*/g, ", ")
+    .replace(/\bplus\b/gi, ",");
+  const coarseParts = normalized
+    .split(",")
+    .map((part) => normalizeValue(part))
+    .filter(Boolean);
+
+  const names = coarseParts.flatMap((part) => splitPackedNameChunk(part));
+  return dedupeNames(names);
+}
+
+function splitPackedNameChunk(chunk: string) {
+  if (!chunk) {
+    return [];
+  }
+
+  const directMatch = chunk.match(/[A-Z][a-z]+(?:\s[A-Z][a-z]+)?/g);
+  if (!directMatch) {
+    return [];
+  }
+
+  if (directMatch.length <= 1) {
+    return directMatch.map(normalizePersonName).filter(Boolean);
+  }
+
+  const expanded: string[] = [];
+  for (const match of directMatch) {
+    const words = match.split(/\s+/).filter(Boolean);
+    if (words.length === 2 && shouldKeepAsDoubleName(words[0], words[1])) {
+      expanded.push(normalizePersonName(match));
+      continue;
+    }
+
+    for (const word of words) {
+      expanded.push(normalizePersonName(word));
+    }
+  }
+
+  return expanded.filter(Boolean);
+}
+
+function shouldKeepAsDoubleName(first: string, second: string) {
+  const normalizedFirst = normalizePersonName(first);
+  const normalizedSecond = normalizePersonName(second);
+
+  return (
+    normalizedFirst.length > 2 &&
+    normalizedSecond.length <= 3
+  );
+}
+
+function normalizePersonName(value: string) {
+  const normalized = normalizeValue(value);
+  if (!normalized) {
+    return "";
+  }
+
+  return normalized
+    .split(/\s+/)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1).toLowerCase()}`)
+    .join(" ");
+}
+
+function dedupeNames(names: string[]) {
+  const seen = new Set<string>();
+  return names.filter((name) => {
+    if (!name) {
+      return false;
+    }
+
+    const key = name.toLowerCase();
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+}
+
+function matchHouseholdMembers(sentence: string, patterns: RegExp[]) {
+  for (const pattern of patterns) {
+    const match = sentence.match(pattern);
+    if (!match) {
+      continue;
+    }
+
+    const members = splitNameList(match[1]);
+    if (members.length > 0) {
+      return members;
+    }
+  }
+
+  return [];
+}
+
+function makeHouseholdMemoryDraft(
+  members: string[],
+  source: PetMemoryItem["source"],
+  confidence: number
+): MemoryDraft {
+  return {
+    category: "relationship",
+    subject: "other",
+    key: "household_members",
+    value: members.join(", "),
+    source,
+    confidence
+  };
+}
+
 function toSnakeCase(value: string) {
   return normalizeValue(value)
     .toLowerCase()
@@ -524,6 +776,30 @@ function extractConfirmedRelationshipMemories(
       source: "observed_in_conversation",
       confidence: 0.86
     });
+  }
+
+  const liveWithQuestion = trimmedMessage.match(
+    /\bdo you live with\s+(.+)$/i
+  );
+  if (liveWithQuestion && isAffirmativeReply(trimmedReply)) {
+    const members = splitNameList(liveWithQuestion[1]);
+    if (members.length > 0) {
+      items.push(
+        makeHouseholdMemoryDraft(members, "observed_in_conversation", 0.88)
+      );
+    }
+  }
+
+  const householdQuestion = trimmedMessage.match(
+    /\bare ([a-zA-Z\s,&+/']+) in your (?:household|family|house|home)\b/i
+  );
+  if (householdQuestion && isAffirmativeReply(trimmedReply)) {
+    const members = splitNameList(householdQuestion[1]);
+    if (members.length > 0) {
+      items.push(
+        makeHouseholdMemoryDraft(members, "observed_in_conversation", 0.86)
+      );
+    }
   }
 
   return dedupeMemoryDrafts(items);
