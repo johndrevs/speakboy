@@ -2,7 +2,7 @@ import Link from "next/link";
 import { PetPersonaManager } from "@/components/pet-persona-manager";
 import { PersonaPreview } from "@/components/persona-preview";
 import { SmsSimulator } from "@/components/sms-simulator";
-import { listPetProfiles } from "@/lib/store";
+import { loadPetProfilesForPage } from "@/lib/pet-profile-loader";
 
 export const dynamic = "force-dynamic";
 
@@ -13,10 +13,21 @@ const features = [
 ];
 
 export default async function HomePage() {
-  const pets = await listPetProfiles();
+  const { pets, loadError } = await loadPetProfilesForPage();
 
   return (
     <main className="page-shell">
+      {loadError ? (
+        <section className="panel">
+          <p className="section-label">Storage issue</p>
+          <h2>Saved pet profiles are temporarily unavailable.</h2>
+          <p className="section-copy">
+            {loadError} The site is still running, but reads and writes may fail
+            until the production storage configuration is fixed.
+          </p>
+        </section>
+      ) : null}
+
       <section className="hero-card">
         <div className="hero-copy">
           <p className="eyebrow">SMS-native pet roleplay</p>

@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { PetMemoryInspector } from "@/components/pet-memory-inspector";
-import { listPetProfiles } from "@/lib/store";
+import { loadPetProfilesForPage } from "@/lib/pet-profile-loader";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +11,7 @@ export const metadata = {
 };
 
 export default async function MemoryPage() {
-  const pets = await listPetProfiles();
+  const { pets, loadError } = await loadPetProfilesForPage();
 
   return (
     <main className="page-shell memory-page-shell">
@@ -33,6 +33,17 @@ export default async function MemoryPage() {
           </Link>
         </div>
       </section>
+
+      {loadError ? (
+        <section className="panel">
+          <p className="section-label">Storage issue</p>
+          <h2>Saved pet profiles are temporarily unavailable.</h2>
+          <p className="section-copy">
+            {loadError} The memory inspector will stay empty until production
+            storage is reachable again.
+          </p>
+        </section>
+      ) : null}
 
       <section className="panel memory-inspector-panel">
         <PetMemoryInspector pets={pets} />
