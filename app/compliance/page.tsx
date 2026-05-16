@@ -22,6 +22,10 @@ export default function CompliancePage() {
           pet persona they created. Messaging is conversational, one-to-one,
           and user-initiated. SpeakBoy is operated by John Drevs.
         </p>
+        <p className="helper-text">
+          Public support contact:
+          <a href="mailto:speakboyhelp@gmail.com"> speakboyhelp@gmail.com</a>
+        </p>
 
         <div className="compliance-grid">
           <article className="compliance-card">

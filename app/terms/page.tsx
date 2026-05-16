@@ -15,6 +15,10 @@ export default function TermsPage() {
           These terms govern the use of SpeakBoy, an SMS-based AI pet persona
           experience operated by John Drevs.
         </p>
+        <p className="helper-text">
+          Support contact:
+          <a href="mailto:speakboyhelp@gmail.com"> speakboyhelp@gmail.com</a>
+        </p>
 
         <section className="compliance-grid">
           <article className="compliance-card">
@@ -39,7 +43,8 @@ export default function TermsPage() {
             <h2>Opt-out and help</h2>
             <p>
               Reply <code>STOP</code> to opt out of future messages. Reply
-              <code>HELP</code> for support.
+              <code>HELP</code> for support, or email
+              <a href="mailto:speakboyhelp@gmail.com"> speakboyhelp@gmail.com</a>.
             </p>
           </article>
 

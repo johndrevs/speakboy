@@ -105,6 +105,13 @@ code {
   background: rgba(246, 210, 190, 0.3);
 }
 
+.business-identity a,
+.helper-text a,
+.section-copy a,
+.compliance-card a {
+  color: var(--accent);
+}
+
 .hero-card,
 .panel {
   backdrop-filter: blur(16px);

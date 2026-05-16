@@ -16,6 +16,10 @@ export default function PrivacyPage() {
           handles contact details, pet persona content, and messaging data for
           the SpeakBoy SMS experience.
         </p>
+        <p className="helper-text">
+          Privacy contact:
+          <a href="mailto:speakboyhelp@gmail.com"> speakboyhelp@gmail.com</a>
+        </p>
 
         <section className="compliance-grid">
           <article className="compliance-card">
@@ -59,9 +63,10 @@ export default function PrivacyPage() {
         <section className="compliance-card">
           <h2>Support</h2>
           <p>
-            For privacy or messaging questions, use the SpeakBoy support flow on
-            the site or reply <code>HELP</code> within a SpeakBoy message
-            thread.
+            For privacy or messaging questions, email
+            <a href="mailto:speakboyhelp@gmail.com"> speakboyhelp@gmail.com</a>
+            , use the SpeakBoy support flow on the site, or reply
+            <code> HELP</code> within a SpeakBoy message thread.
           </p>
         </section>
 

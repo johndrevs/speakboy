@@ -17,19 +17,24 @@ export default function OptInPage() {
     <main className="page-shell">
       <section className="panel compliance-panel">
         <p className="section-label">Public Opt-In</p>
-        <h1 className="compliance-title">SpeakBoy SMS consent example</h1>
+        <h1 className="compliance-title">Start a SpeakBoy SMS pet thread</h1>
         <p className="section-copy">
-          This public page shows the consent language and opt-in workflow used
-          before a user starts a SpeakBoy pet-texting thread. SpeakBoy is
-          operated by John Drevs and provides one-to-one conversational SMS for
-          users interacting with their own AI pet persona.
+          This public page shows the web-based opt-in flow used before a user
+          starts a SpeakBoy pet-texting thread. SpeakBoy is operated by John
+          Drevs and provides one-to-one conversational SMS for users
+          interacting with their own AI pet persona.
+        </p>
+        <p className="helper-text">
+          Support:
+          <a href="mailto:speakboyhelp@gmail.com"> speakboyhelp@gmail.com</a>
         </p>
 
         <section className="compliance-card">
-          <h2>Example signup flow</h2>
+          <h2>Web form opt-in flow</h2>
           <p>
             A user requests a SpeakBoy pet thread by submitting their mobile
-            number and acknowledging the messaging disclosures below.
+            number and separately consenting to receive SMS messages from
+            SpeakBoy.
           </p>
 
           <form className="form-grid compliance-form-preview">
@@ -51,16 +56,23 @@ export default function OptInPage() {
             <label className="checkbox-row">
               <input checked readOnly type="checkbox" />
               <span>
-                I agree to receive conversational text messages from SpeakBoy
-                about my pet persona thread at the phone number I provided.
+                I agree to receive SMS/text messages from SpeakBoy at the phone
+                number I provided about my pet persona thread.
               </span>
             </label>
 
             <p className="helper-text compliance-disclosure">
               By tapping &quot;Start my pet thread,&quot; I agree to receive SMS
-              messages from SpeakBoy. Message frequency varies. Message and data
-              rates may apply. Reply STOP to opt out and HELP for help. Consent
-              is not a condition of purchase.
+              text messages from SpeakBoy about my pet persona conversation.
+              Message frequency varies. Message and data rates may apply. Reply
+              STOP to opt out and HELP for help. Consent is not a condition of
+              purchase.
+            </p>
+
+            <p className="helper-text">
+              By continuing, you also acknowledge the separate
+              <Link href="/privacy"> Privacy Policy</Link> and
+              <Link href="/terms"> Terms of Service</Link>.
             </p>
 
             <div className="form-actions">
@@ -76,8 +88,11 @@ export default function OptInPage() {
             <h2>What the user is opting into</h2>
             <p>
               SpeakBoy sends conversational one-to-one SMS replies from the pet
-              persona the user created or requested. Messages are not affiliate
-              marketing, lead generation, or third-party promotions.
+              persona the user created or requested. Messages include pet thread
+              replies, limited support responses, and requested follow-up
+              messages related to the user&apos;s own conversation. Messages are
+              not affiliate marketing, lead generation, or third-party
+              promotions.
             </p>
           </article>
 

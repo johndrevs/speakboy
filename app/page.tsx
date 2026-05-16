@@ -36,6 +36,10 @@ export default async function HomePage() {
             SpeakBoy lets someone text a dedicated number and receive replies as
             if their dog, cat, or bird were speaking for themselves.
           </p>
+          <p className="helper-text business-identity">
+            SpeakBoy is operated by John Drevs. Support:
+            <a href="mailto:speakboyhelp@gmail.com"> speakboyhelp@gmail.com</a>
+          </p>
           <ul className="feature-list">
             {features.map((feature) => (
               <li key={feature}>{feature}</li>
@@ -98,6 +102,10 @@ export default async function HomePage() {
         <p className="section-copy">
           These public pages document SpeakBoy&apos;s SMS opt-in flow, privacy
           practices, terms, and messaging compliance details.
+        </p>
+        <p className="helper-text">
+          Public support contact:
+          <a href="mailto:speakboyhelp@gmail.com"> speakboyhelp@gmail.com</a>
         </p>
         <div className="compliance-link-row">
           <Link className="memory-back-link" href="/opt-in">
