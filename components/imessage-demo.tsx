@@ -12,6 +12,7 @@ const defaultFromNumber = "+13125550000";
 
 export function IMessageDemo({ pets }: Props) {
   const threadRef = useRef<HTMLDivElement | null>(null);
+  const hasPets = pets.length > 0;
   const [selectedPetId, setSelectedPetId] = useState<string>(pets[0]?.id ?? "");
   const [fromNumber, setFromNumber] = useState(defaultFromNumber);
   const [message, setMessage] = useState("");
@@ -38,18 +39,22 @@ export function IMessageDemo({ pets }: Props) {
 
     threadRef.current.scrollTop = threadRef.current.scrollHeight;
   }, [history]);
-
-  if (pets.length === 0) {
-    return (
-      <div className="iphone-demo-empty">
-        Create a pet persona first so the iMessage demo has someone to text.
-      </div>
-    );
-  }
-
-  const selectedPet = pets.find((pet) => pet.id === selectedPetId) ?? pets[0];
+  const selectedPet = pets.find((pet) => pet.id === selectedPetId) ?? null;
+  const activePetId = selectedPet?.id ?? null;
 
   useEffect(() => {
+    if (!activePetId) {
+      setHistory([]);
+      setMessage("");
+      setReplySource(null);
+      setLastExtractedMemories([]);
+      setStatus(null);
+      setIsLoadingHistory(false);
+      return;
+    }
+
+    const petId = activePetId;
+
     async function loadHistory() {
       setIsLoadingHistory(true);
       setMessage("");
@@ -59,7 +64,7 @@ export function IMessageDemo({ pets }: Props) {
 
       try {
         const params = new URLSearchParams({
-          petId: selectedPet.id,
+          petId,
           fromNumber
         });
         const response = await fetch(`/api/simulate?${params.toString()}`);
@@ -84,7 +89,17 @@ export function IMessageDemo({ pets }: Props) {
     }
 
     void loadHistory();
-  }, [selectedPet.id, fromNumber]);
+  }, [activePetId, fromNumber]);
+
+  if (!hasPets || !selectedPet) {
+    return (
+      <div className="iphone-demo-empty">
+        Create a pet persona first so the iMessage demo has someone to text.
+      </div>
+    );
+  }
+
+  const activePet = selectedPet;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -114,7 +129,7 @@ export function IMessageDemo({ pets }: Props) {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          petId: selectedPet.id,
+          petId: activePet.id,
           fromNumber,
           message: outgoingMessage
         })
@@ -182,7 +197,7 @@ export function IMessageDemo({ pets }: Props) {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          petId: selectedPet.id,
+          petId: activePet.id,
           fromNumber
         })
       });
@@ -215,13 +230,13 @@ export function IMessageDemo({ pets }: Props) {
         <div className="imessage-header">
           <div className="imessage-header-top">Messages</div>
           <div className="imessage-contact">
-            <div className="imessage-avatar">{selectedPet.petName[0]}</div>
+            <div className="imessage-avatar">{activePet.petName[0]}</div>
             <div className="imessage-contact-meta">
               <select
                 aria-label="Select pet conversation"
                 className="imessage-pet-select"
                 onChange={(event) => setSelectedPetId(event.target.value)}
-                value={selectedPet.id}
+                value={activePet.id}
               >
                 {pets.map((pet) => (
                   <option key={pet.id} value={pet.id}>
@@ -229,7 +244,7 @@ export function IMessageDemo({ pets }: Props) {
                   </option>
                 ))}
               </select>
-              <span>{selectedPet.twilioNumber}</span>
+              <span>{activePet.twilioNumber}</span>
             </div>
             <button
               aria-label="Reset current thread"
@@ -253,7 +268,7 @@ export function IMessageDemo({ pets }: Props) {
             <div className="imessage-empty">
               <p>Today</p>
               <span>
-                Start the thread by sending {selectedPet.petName} a text.
+                Start the thread by sending {activePet.petName} a text.
               </span>
             </div>
           ) : (
@@ -275,7 +290,7 @@ export function IMessageDemo({ pets }: Props) {
         <form className="imessage-composer" onSubmit={handleSubmit}>
           <input
             onChange={(event) => setMessage(event.target.value)}
-            placeholder={`Text ${selectedPet.petName}...`}
+            placeholder={`Text ${activePet.petName}...`}
             value={message}
           />
           <button disabled={isSending} type="submit">

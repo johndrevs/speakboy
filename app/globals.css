@@ -332,7 +332,7 @@ code {
 .memory-toolbar {
   display: flex;
   gap: 12px;
-  align-items: end;
+  align-items: flex-end;
   justify-content: space-between;
   flex-wrap: wrap;
 }
@@ -370,7 +370,7 @@ code {
 
 .memory-card-topline {
   display: flex;
-  align-items: start;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
 }
