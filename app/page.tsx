@@ -91,6 +91,29 @@ export default async function HomePage() {
           Open memory bath
         </Link>
       </section>
+
+      <section className="panel site-links-panel">
+        <p className="section-label">Public Pages</p>
+        <h2>Business, consent, and policy links.</h2>
+        <p className="section-copy">
+          These public pages document SpeakBoy&apos;s SMS opt-in flow, privacy
+          practices, terms, and messaging compliance details.
+        </p>
+        <div className="compliance-link-row">
+          <Link className="memory-back-link" href="/opt-in">
+            SMS Opt-In
+          </Link>
+          <Link className="memory-back-link" href="/privacy">
+            Privacy
+          </Link>
+          <Link className="memory-back-link" href="/terms">
+            Terms
+          </Link>
+          <Link className="memory-back-link" href="/compliance">
+            Compliance
+          </Link>
+        </div>
+      </section>
     </main>
   );
 }

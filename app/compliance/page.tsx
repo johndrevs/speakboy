@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export const metadata = {
   title: "SpeakBoy Messaging Compliance",
   description: "Messaging opt-in, consent, and support details for SpeakBoy."
@@ -18,15 +20,16 @@ export default function CompliancePage() {
         <p className="section-copy">
           SpeakBoy is an SMS application that lets a user interact with an AI
           pet persona they created. Messaging is conversational, one-to-one,
-          and user-initiated.
+          and user-initiated. SpeakBoy is operated by John Drevs.
         </p>
 
         <div className="compliance-grid">
           <article className="compliance-card">
             <h2>Opt-in</h2>
             <p>
-              Users opt in by sending the first text message to the dedicated
-              SpeakBoy phone number assigned to their pet persona experience.
+              Users opt in through the SpeakBoy consent flow before starting a
+              pet thread. The public example is available on the SMS opt-in
+              page linked below.
             </p>
             <p>
               SpeakBoy does not add users from purchased lists, uploaded phone
@@ -37,9 +40,9 @@ export default function CompliancePage() {
           <article className="compliance-card">
             <h2>Consent</h2>
             <p>
-              Consent is established when the user initiates the conversation by
-              texting the number first. Messages are then sent only as replies
-              within that conversation.
+              Consent is collected directly by SpeakBoy from the user who
+              provides their mobile number and agrees to receive conversational
+              SMS messages for their pet persona thread.
             </p>
           </article>
 
@@ -83,8 +86,28 @@ export default function CompliancePage() {
           <h2>Support Contact</h2>
           <p>
             For support questions about SpeakBoy messaging, users can reply
-            <code> HELP</code> within the SMS conversation.
+            <code> HELP</code> within the SMS conversation. Reviewers can also
+            use the linked public policy pages to verify the website and
+            messaging disclosures.
           </p>
+        </section>
+
+        <section className="compliance-card">
+          <h2>Reviewer links</h2>
+          <div className="compliance-link-row">
+            <Link className="memory-back-link" href="/">
+              Homepage
+            </Link>
+            <Link className="memory-back-link" href="/opt-in">
+              SMS Opt-In
+            </Link>
+            <Link className="memory-back-link" href="/privacy">
+              Privacy
+            </Link>
+            <Link className="memory-back-link" href="/terms">
+              Terms
+            </Link>
+          </div>
         </section>
       </section>
     </main>

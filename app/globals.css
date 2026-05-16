@@ -72,6 +72,39 @@ code {
   line-height: 1.6;
 }
 
+.compliance-card ul {
+  margin: 10px 0 0;
+}
+
+.compliance-link-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.compliance-form-preview {
+  margin-top: 18px;
+}
+
+.checkbox-row {
+  grid-template-columns: auto 1fr;
+  align-items: start;
+}
+
+.checkbox-row input {
+  width: 18px;
+  height: 18px;
+  margin-top: 4px;
+}
+
+.compliance-disclosure {
+  padding: 14px 16px;
+  border: 1px solid rgba(183, 86, 43, 0.18);
+  border-radius: 18px;
+  background: rgba(246, 210, 190, 0.3);
+}
+
 .hero-card,
 .panel {
   backdrop-filter: blur(16px);
